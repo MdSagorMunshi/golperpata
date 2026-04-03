@@ -10,6 +10,8 @@
 
 [🌐 Live Site](https://golperpata.vercel.app) · [📖 গল্প পড়ুন](https://golperpata.vercel.app/golpo) · [✍️ গল্প জমা দিন](#গল্প-জমা-দিন)
 
+*[🇬🇧 Read in English](README.en.md)*
+
 </div>
 
 ---
