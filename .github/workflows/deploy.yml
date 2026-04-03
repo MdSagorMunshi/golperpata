@@ -1,0 +1,116 @@
+name: 🚀 Deploy গল্পের.পাতা
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'golpo/**'
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+  BUN_VERSION: 'latest'
+
+jobs:
+  lint-and-build:
+    name: 🔍 Lint & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🧰 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🔍 Type check
+        run: bun run tsc --noEmit
+
+      - name: 🏗️ Build
+        run: bun run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://golperpata.vercel.app
+          NEXT_PUBLIC_SITE_NAME: গল্পের.পাতা
+          NEXT_PUBLIC_GITHUB_REPO_URL: https://github.com/MdSagorMunshi/golperpata
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+  story-validation:
+    name: 📖 Validate Stories
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🧰 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: ✅ Validate story files
+        run: |
+          echo "🔍 Checking golpo/ directory..."
+          
+          ERRORS=0
+          
+          # Check each .md file in golpo/
+          for file in $(find golpo -name "*.md" -type f); do
+            echo "📖 Validating: $file"
+            
+            # Check for required frontmatter fields
+            if ! grep -q "শিরোনাম:" "$file"; then
+              echo "❌ Missing শিরোনাম (title) in $file"
+              ERRORS=$((ERRORS + 1))
+            fi
+            
+            if ! grep -q "লেখক:" "$file"; then
+              echo "❌ Missing লেখক (author) in $file"
+              ERRORS=$((ERRORS + 1))
+            fi
+            
+            if ! grep -q "বিষয়শ্রেণী:" "$file"; then
+              echo "❌ Missing বিষয়শ্রেণী (category) in $file"
+              ERRORS=$((ERRORS + 1))
+            fi
+            
+            # Check file is not empty (at least 100 chars of content)
+            CONTENT_LENGTH=$(wc -c < "$file")
+            if [ "$CONTENT_LENGTH" -lt 100 ]; then
+              echo "❌ File too short: $file ($CONTENT_LENGTH chars)"
+              ERRORS=$((ERRORS + 1))
+            fi
+            
+            echo "✅ $file looks good"
+          done
+          
+          if [ $ERRORS -gt 0 ]; then
+            echo ""
+            echo "❌ Found $ERRORS validation errors"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ All stories validated successfully!"
+
+      - name: 📊 Story stats
+        run: |
+          TOTAL=$(find golpo -name "*.md" -type f | wc -l)
+          AUTHORS=$(find golpo -mindepth 1 -maxdepth 1 -type d | wc -l)
+          echo "📚 Total stories: $TOTAL"
+          echo "✍️ Total authors: $AUTHORS"

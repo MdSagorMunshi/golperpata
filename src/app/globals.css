@@ -1,0 +1,528 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   গল্পের.পাতা — "পুরনো পাতা" (Old Pages) Design System
+   ========================================================================== */
+
+/* ---------- Custom Font Faces ---------- */
+/* Note: Using next/font for automatic self-hosting, but defining CSS vars here */
+
+/* ---------- Color System (Bengali-named tokens) ---------- */
+:root {
+  /* Background Colors */
+  --রং-কাগজ: #F5F0E8;
+  --রং-পুরনো-কাগজ: #EDE7D5;
+  --রং-কার্ড: #FAF7F2;
+  --রং-রাত-কাগজ: #1E1A14;
+  --রং-রাত-কার্ড: #2A2318;
+
+  /* Text Colors */
+  --রং-কালি: #1A1208;
+  --রং-কালি-মাঝারি: #4A3728;
+  --রং-কালি-হালকা: #8B7355;
+  --রং-কালি-বিবর্ণ: #C4B49A;
+
+  /* Accent Colors */
+  --রং-জাফরান: #C8751A;
+  --রং-হলুদ: #E8A830;
+  --রং-ইট: #8B3A2A;
+  --রং-বন: #2D5016;
+  --রং-মাটি: #6B4423;
+  --রং-লাল: #9B2335;
+
+  /* Border Colors */
+  --সীমা-হালকা: #D4C5A9;
+  --সীমা-মাঝারি: #B8A48A;
+  --সীমা-গাঢ়: #8B7355;
+
+  /* Shadows */
+  --ছায়া-কার্ড: 0 2px 12px rgba(107, 68, 35, 0.12), 0 1px 4px rgba(107, 68, 35, 0.08);
+  --ছায়া-কার্ড-হোভার: 0 8px 24px rgba(107, 68, 35, 0.18), 0 2px 8px rgba(107, 68, 35, 0.12);
+
+  /* Typography */
+  --ফন্ট-শিরোনাম: var(--font-tiro-bangla), 'Tiro Bangla', serif;
+  --ফন্ট-মূল: var(--font-hind-siliguri), 'Hind Siliguri', sans-serif;
+  --ফন্ট-উদ্ধৃতি: var(--font-noto-serif-bengali), 'Noto Serif Bengali', serif;
+  --ফন্ট-ইংরেজি: var(--font-crimson-pro), 'Crimson Pro', serif;
+  --ফন্ট-কোড: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+
+  /* Spacing */
+  --spacing-section: 5rem;
+  --max-width-reading: 680px;
+  --max-width-content: 1200px;
+
+  /* Transitions */
+  --transition-fast: 200ms ease-out;
+  --transition-normal: 300ms ease-out;
+  --transition-slow: 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ---------- Dark Mode ---------- */
+[data-theme="dark"] {
+  --রং-কাগজ: #1E1A14;
+  --রং-পুরনো-কাগজ: #252015;
+  --রং-কার্ড: #2A2318;
+  --রং-কালি: #E8DEC8;
+  --রং-কালি-মাঝারি: #C4B49A;
+  --রং-কালি-হালকা: #8B7355;
+  --রং-কালি-বিবর্ণ: #5A4D3D;
+  --রং-জাফরান: #D4841E;
+  --রং-হলুদ: #E8A830;
+  --রং-ইট: #C4524A;
+  --রং-বন: #4A8A2A;
+  --রং-মাটি: #9B7553;
+  --সীমা-হালকা: #3D3428;
+  --সীমা-মাঝারি: #4A3D30;
+  --সীমা-গাঢ়: #5A4D3D;
+  --ছায়া-কার্ড: 0 2px 12px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2);
+  --ছায়া-কার্ড-হোভার: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- Base Styles ---------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--ফন্ট-মূল);
+  font-size: 18px;
+  line-height: 1.9;
+  color: var(--রং-কালি);
+  background-color: var(--রং-কাগজ);
+  background-image: url('/images/paper-light.png');
+  background-size: 400px 400px;
+  word-spacing: 0.04em;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+[data-theme="dark"] body {
+  background-image: url('/images/paper-dark.png');
+}
+
+/* SVG Noise Grain Overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 256px;
+}
+
+/* ---------- Typography ---------- */
+
+/* Bengali headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--ফন্ট-শিরোনাম);
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  color: var(--রং-কালি);
+}
+
+h1 { font-size: 3rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.5rem; }
+
+@media (max-width: 768px) {
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+}
+
+/* Links */
+a {
+  color: var(--রং-জাফরান);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--রং-হলুদ);
+}
+
+/* Focus indicators (Accessibility) */
+:focus-visible {
+  outline: 2px solid var(--রং-জাফরান);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------- Story Reader Styles ---------- */
+
+/* Drop Cap (আদ্যক্ষর) */
+.story-body > p:first-of-type::first-letter {
+  font-family: var(--ফন্ট-শিরোনাম);
+  font-size: 4.5rem;
+  float: left;
+  line-height: 0.85;
+  color: var(--রং-জাফরান);
+  padding-right: 0.5rem;
+  padding-top: 0.1rem;
+}
+
+/* Blockquotes (verse/poetry) */
+.story-body blockquote {
+  font-family: var(--ফন্ট-উদ্ধৃতি);
+  font-size: 1.25rem;
+  font-style: italic;
+  line-height: 2.0;
+  border-left: 3px solid var(--রং-জাফরান);
+  padding-left: 2rem;
+  margin: 2rem 0;
+  background: var(--রং-পুরনো-কাগজ);
+  padding: 1.5rem 2rem;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Dialogue lines (em-dash) */
+.story-body p[data-dialogue="true"] {
+  padding-left: 1.5rem;
+}
+
+/* Story headings (## within story) */
+.story-body h2 {
+  font-family: var(--ফন্ট-শিরোনাম);
+  font-size: 1.4rem;
+  color: var(--রং-জাফরান);
+  margin: 2.5rem 0 1rem;
+}
+
+/* Horizontal rules as alpona divider */
+.story-body hr {
+  border: none;
+  height: 40px;
+  background: url('/images/alpona-divider.png') center/contain no-repeat;
+  opacity: 0.5;
+  margin: 2.5rem auto;
+  max-width: 480px;
+}
+
+/* ---------- Component Styles ---------- */
+
+/* Paper Card */
+.paper-card {
+  background-color: var(--রং-কার্ড);
+  background-image: url('/images/paper-light.png');
+  background-size: 400px 400px;
+  border: 1px solid var(--সীমা-হালকা);
+  border-radius: 4px;
+  box-shadow: var(--ছায়া-কার্ড);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .paper-card {
+  background-image: url('/images/paper-dark.png');
+}
+
+.paper-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--ছায়া-কার্ড-হোভার);
+}
+
+/* Page Fold Corner */
+.paper-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    var(--রং-পুরনো-কাগজ) 50%
+  );
+  transition: all var(--transition-fast);
+}
+
+.paper-card:hover::after {
+  width: 28px;
+  height: 28px;
+}
+
+/* Ink Stamp Badge */
+.ink-badge {
+  display: inline-block;
+  font-family: var(--ফন্ট-মূল);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: -0.01em;
+  padding: 0.2rem 0.6rem;
+  background: var(--রং-কাগজ);
+  border: 1.5px solid var(--সীমা-গাঢ়);
+  border-radius: 2px;
+  color: var(--রং-কালি-মাঝারি);
+  text-shadow: 0 0 1px currentColor;
+  user-select: none;
+}
+
+.ink-badge--saffron {
+  border-color: var(--রং-জাফরান);
+  color: var(--রং-জাফরান);
+}
+
+.ink-badge--green {
+  border-color: var(--রং-বন);
+  color: var(--রং-বন);
+}
+
+.ink-badge--red {
+  border-color: var(--রং-ইট);
+  color: var(--রং-ইট);
+}
+
+.ink-badge--ai {
+  border-color: #7C3AED;
+  color: #7C3AED;
+  background: rgba(124, 58, 237, 0.08);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .ink-badge--ai {
+  border-color: #A78BFA;
+  color: #A78BFA;
+  background: rgba(167, 139, 250, 0.12);
+}
+
+/* Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--ফন্ট-মূল);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--রং-কাগজ);
+  color: var(--রং-কালি);
+  border: 2px solid var(--সীমা-মাঝারি);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn:hover {
+  background: var(--রং-জাফরান);
+  color: #fff;
+  border-color: var(--রং-জাফরান);
+  transform: translateY(-1px);
+}
+
+.btn--primary {
+  background: var(--রং-জাফরান);
+  color: #fff;
+  border-color: var(--রং-জাফরান);
+}
+
+.btn--primary:hover {
+  background: #B56816;
+  border-color: #B56816;
+}
+
+/* ---------- Alpona Divider ---------- */
+.alpona-divider {
+  display: block;
+  max-width: 480px;
+  height: 40px;
+  margin: 2rem auto;
+  background: url('/images/alpona-divider.png') center/contain no-repeat;
+  opacity: 0.5;
+}
+
+/* ---------- Animations ---------- */
+
+/* Floating Quill */
+@keyframes floatQuill {
+  0%, 100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+.float-quill {
+  animation: floatQuill 4s ease-in-out infinite;
+}
+
+/* Ken Burns (slow zoom) */
+@keyframes kenBurns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+
+.ken-burns {
+  animation: kenBurns 30s ease-in-out infinite alternate;
+}
+
+/* Count Up (for stats) */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Scroll indicator bounce */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+.bounce {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+/* Ink Loader Sprite */
+@keyframes inkSpread {
+  0% { background-position: 0 0; }
+  100% { background-position: -1200px 0; }
+}
+
+.ink-loader {
+  width: 200px;
+  height: 200px;
+  background-image: url('/images/ink-frames.png');
+  background-size: 1200px 200px;
+  animation: inkSpread 0.4s steps(6) infinite;
+}
+
+/* Reading progress bar */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--রং-জাফরান);
+  z-index: 9999;
+  will-change: width;
+  transition: none;
+}
+
+/* ---------- Responsive Layout ---------- */
+.container {
+  width: 100%;
+  max-width: var(--max-width-content);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+/* ---------- Selection ---------- */
+::selection {
+  background: rgba(200, 117, 26, 0.25);
+  color: var(--রং-কালি);
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--রং-পুরনো-কাগজ);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--সীমা-মাঝারি);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--রং-মাটি);
+}
+
+/* ---------- Print Stylesheet ---------- */
+@media print {
+  body {
+    background: white !important;
+    background-image: none !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  body::before { display: none !important; }
+
+  nav, footer,
+  .reading-controls,
+  .related-stories,
+  .scroll-progress,
+  .theme-toggle,
+  .alpona-divider,
+  .lotus-ornament,
+  .float-quill,
+  .reading-progress {
+    display: none !important;
+  }
+
+  .paper-card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    background-image: none !important;
+  }
+
+  .paper-card::after { display: none !important; }
+
+  .story-body {
+    max-width: 100% !important;
+    font-size: 12pt !important;
+    line-height: 1.6 !important;
+  }
+
+  a { color: black !important; }
+
+  @page {
+    margin: 2cm;
+  }
+}
+
+/* ---------- Reading Mode ---------- */
+[data-reading-mode="true"] {
+  nav, footer, .related-stories, .toc-sidebar,
+  .reading-controls-bar, .alpona-divider,
+  .lotus-ornament { display: none !important; }
+
+  body {
+    background-image: none !important;
+  }
+
+  body::before { display: none !important; }
+
+  .story-container {
+    max-width: 760px !important;
+  }
+}
