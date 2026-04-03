@@ -47,17 +47,19 @@ jobs:
                 return parts[parts.length - 1].replace('.md', '');
               });
               
-              const comment = `## 📖 নতুন গল্প যোগ হচ্ছে!
-              
-ধন্যবাদ গল্পের.পাতায় অবদান রাখার জন্য! 🎉
-
-**যোগ করা হচ্ছে:**
-${storyNames.map(n => `- 📄 ${n}`).join('\n')}
-
-**লেখক ফোল্ডার:** ${Array.from(authorDirs).join(', ')}
-
----
-*এই PR মার্জ হলে গল্প${storyNames.length > 1 ? 'গুলো' : 'টি'} স্বয়ংক্রিয়ভাবে সাইটে প্রকাশিত হবে।*`;
+              const comment = [
+                `## 📖 নতুন গল্প যোগ হচ্ছে!`,
+                ``,
+                `ধন্যবাদ গল্পের.পাতায় অবদান রাখার জন্য! 🎉`,
+                ``,
+                `**যোগ করা হচ্ছে:**`,
+                storyNames.map(n => `- 📄 ${n}`).join('\n'),
+                ``,
+                `**লেখক ফোল্ডার:** ${Array.from(authorDirs).join(', ')}`,
+                ``,
+                `---`,
+                `*এই PR মার্জ হলে গল্প${storyNames.length > 1 ? 'গুলো' : 'টি'} স্বয়ংক্রিয়ভাবে সাইটে প্রকাশিত হবে।*`,
+              ].join('\n');
               
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
