@@ -9,6 +9,7 @@ permissions:
   pull-requests: write
   issues: write
   contents: read
+  checks: read
 
 jobs:
   label-pr:
@@ -59,7 +60,7 @@ jobs:
                 `**লেখক ফোল্ডার:** ${Array.from(authorDirs).join(', ')}`,
                 ``,
                 `---`,
-                `*এই PR মার্জ হলে গল্প${storyNames.length > 1 ? 'গুলো' : 'টি'} স্বয়ংক্রিয়ভাবে সাইটে প্রকাশিত হবে।*`,
+                `*এই PR মার্জ হলে গল্প${storyNames.length > 1 ? 'গুলো' : 'টি'} স্বয়ংক্রিয়ভাবে সাইটে প্রকাশিত হবে!*`
               ].join('\n');
               
               await github.rest.issues.createComment({
