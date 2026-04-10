@@ -1,8 +1,10 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useSyncExternalStore } from 'react';
 
 type Theme = 'light' | 'dark';
+const THEME_STORAGE_KEY = 'golperpata-theme';
+const SYSTEM_THEME_QUERY = '(prefers-color-scheme: dark)';
 
 interface ThemeContextType {
   theme: Theme;
@@ -14,33 +16,66 @@ const ThemeContext = createContext<ThemeContextType>({
   toggleTheme: () => {},
 });
 
+function getStoredThemePreference(): Theme | null {
+  if (typeof window === 'undefined') return null;
+
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  return stored === 'light' || stored === 'dark' ? stored : null;
+}
+
+function getSystemThemeSnapshot(): Theme {
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia(SYSTEM_THEME_QUERY).matches ? 'dark' : 'light';
+}
+
+function subscribeToSystemTheme(onStoreChange: () => void) {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+
+  const mediaQuery = window.matchMedia(SYSTEM_THEME_QUERY);
+  mediaQuery.addEventListener('change', onStoreChange);
+
+  return () => {
+    mediaQuery.removeEventListener('change', onStoreChange);
+  };
+}
+
+function applyResolvedTheme(theme: Theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.style.colorScheme = theme;
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
+  const [themePreference, setThemePreference] = useState<Theme | null>(getStoredThemePreference);
+  const systemTheme = useSyncExternalStore<Theme>(
+    subscribeToSystemTheme,
+    getSystemThemeSnapshot,
+    () => 'light',
+  );
+  const isHydrated = useSyncExternalStore<boolean>(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const theme = themePreference ?? systemTheme;
 
   useEffect(() => {
-    const stored = localStorage.getItem('golperpata-theme') as Theme | null;
-    if (stored) {
-      setTheme(stored);
-      document.documentElement.setAttribute('data-theme', stored);
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-    setMounted(true);
-  }, []);
+    applyResolvedTheme(theme);
+  }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem('golperpata-theme', next);
-      document.documentElement.setAttribute('data-theme', next);
+    setThemePreference((prev) => {
+      const current = prev ?? getSystemThemeSnapshot();
+      const next = current === 'light' ? 'dark' : 'light';
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+      applyResolvedTheme(next);
       return next;
     });
   }, []);
 
   // Prevent flash of wrong theme
-  if (!mounted) {
+  if (!isHydrated) {
     return <>{children}</>;
   }
 

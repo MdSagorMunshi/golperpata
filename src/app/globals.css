@@ -89,6 +89,11 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {
@@ -164,7 +169,7 @@ a:hover {
 /* ---------- Story Reader Styles ---------- */
 
 /* Drop Cap (আদ্যক্ষর) */
-.story-body > p:first-of-type::first-letter {
+.story-body .story-paragraph--lead::first-letter {
   font-family: var(--ফন্ট-শিরোনাম);
   font-size: 4.5rem;
   float: left;
@@ -209,6 +214,138 @@ a:hover {
   opacity: 0.5;
   margin: 2.5rem auto;
   max-width: 480px;
+}
+
+.story-page {
+  min-height: 68vh;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background-color: var(--রং-কার্ড);
+  background-image: url('/images/paper-light.png');
+  background-size: 400px 400px;
+  border: 1px solid var(--সীমা-হালকা);
+  border-radius: 8px;
+  box-shadow: var(--ছায়া-কার্ড);
+}
+
+[data-theme="dark"] .story-page {
+  background-image: url('/images/paper-dark.png');
+}
+
+[data-reading-ink="true"] .story-page {
+  background: linear-gradient(180deg, #faf6ee 0%, #f4ecdc 100%);
+  border-color: #9a8767;
+  box-shadow: 0 12px 30px rgba(26, 18, 8, 0.12);
+}
+
+[data-reading-ink="true"] .story-body {
+  color: #16110a !important;
+}
+
+[data-reading-ink="true"] .story-body h2,
+[data-reading-ink="true"] .story-body .story-paragraph--lead::first-letter,
+[data-reading-ink="true"] .story-pagination__status {
+  color: #3f2a15;
+}
+
+[data-reading-ink="true"] .story-body blockquote {
+  background: rgba(107, 68, 35, 0.08);
+  border-left-color: #4d3118;
+}
+
+[data-reading-ink="true"] .reading-controls,
+[data-reading-ink="true"] .story-pagination .btn:not(.btn--primary) {
+  background-color: #f7f0e2 !important;
+  border-color: #b19a78 !important;
+}
+
+[data-reading-ink="true"] .story-pagination .btn--primary {
+  background-color: #4b321e;
+  border-color: #4b321e;
+}
+
+[data-theme="dark"][data-reading-ink="true"] .story-page {
+  background: linear-gradient(180deg, #16120d 0%, #201910 100%);
+  border-color: #5d4e3e;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"][data-reading-ink="true"] .story-body {
+  color: #f1e7d2 !important;
+}
+
+[data-theme="dark"][data-reading-ink="true"] .story-body h2,
+[data-theme="dark"][data-reading-ink="true"] .story-body .story-paragraph--lead::first-letter,
+[data-theme="dark"][data-reading-ink="true"] .story-pagination__status {
+  color: #e0bf86;
+}
+
+[data-theme="dark"][data-reading-ink="true"] .story-body blockquote {
+  background: rgba(255, 248, 232, 0.06);
+  border-left-color: #d4b078;
+}
+
+[data-theme="dark"][data-reading-ink="true"] .reading-controls,
+[data-theme="dark"][data-reading-ink="true"] .story-pagination .btn:not(.btn--primary) {
+  background-color: #21180f !important;
+  border-color: #5d4e3e !important;
+  color: #f1e7d2;
+}
+
+[data-theme="dark"][data-reading-ink="true"] .story-pagination .btn--primary {
+  background-color: #c89245;
+  border-color: #c89245;
+  color: #1a1208;
+}
+
+.story-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.story-pagination__status {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--রং-কালি-মাঝারি);
+}
+
+.story-pagination__buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.story-pagination .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .story-page {
+    min-height: auto;
+    padding: 1.25rem;
+  }
+
+  .story-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .story-pagination__status {
+    text-align: center;
+  }
+
+  .story-pagination__buttons {
+    width: 100%;
+  }
+
+  .story-pagination__buttons .btn {
+    flex: 1 1 0;
+    justify-content: center;
+  }
 }
 
 /* ---------- Component Styles ---------- */
@@ -501,6 +638,18 @@ a:hover {
     max-width: 100% !important;
     font-size: 12pt !important;
     line-height: 1.6 !important;
+  }
+
+  .story-page {
+    min-height: auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  .story-pagination {
+    display: none !important;
   }
 
   a { color: black !important; }

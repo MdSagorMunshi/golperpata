@@ -2,19 +2,119 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Story } from '@/types/story';
+import { toBengaliNumeral } from '@/lib/utils';
 import { ReadingControls } from './ReadingControls';
 
 interface StoryReaderProps {
   story: Story;
 }
 
+type StoryBlock =
+  | { key: string; type: 'heading'; text: string }
+  | { key: string; type: 'blockquote'; text: string }
+  | { key: string; type: 'hr' }
+  | { key: string; type: 'paragraph'; text: string; isLeadParagraph: boolean; isDialogue: boolean };
+
 export function StoryReader({ story }: StoryReaderProps) {
   const fm = story.frontmatter;
+  const [fontSize, setFontSize] = useState(115);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const pageTopRef = useRef<HTMLDivElement>(null);
+  const hasPaginatedRef = useRef(false);
+
+  const storyBlocks = useMemo(() => parseStoryBlocks(story.content), [story.content]);
+  const pageCharacterBudget = useMemo(
+    () => getPageCharacterBudget(viewportWidth, fontSize),
+    [fontSize, viewportWidth],
+  );
+  const pagedBlocks = useMemo(
+    () => paginateStoryBlocks(storyBlocks, pageCharacterBudget),
+    [pageCharacterBudget, storyBlocks],
+  );
+  const totalPages = pagedBlocks.length;
+  const safeCurrentPage = Math.min(currentPage, Math.max(totalPages - 1, 0));
+  const visibleBlocks = isPrinting
+    ? storyBlocks
+    : pagedBlocks[safeCurrentPage] ?? storyBlocks;
+
+  const changeFontSize = (delta: number) => {
+    setFontSize((prev) => Math.min(180, Math.max(80, prev + delta)));
+  };
+
+  const goToPage = useCallback((page: number) => {
+    hasPaginatedRef.current = true;
+    setCurrentPage(Math.max(0, Math.min(totalPages - 1, page)));
+  }, [totalPages]);
+
+  useEffect(() => {
+    const updateViewportWidth = () => {
+      setViewportWidth(window.innerWidth);
+    };
+
+    updateViewportWidth();
+    window.addEventListener('resize', updateViewportWidth);
+
+    return () => {
+      window.removeEventListener('resize', updateViewportWidth);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleBeforePrint = () => setIsPrinting(true);
+    const handleAfterPrint = () => setIsPrinting(false);
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (totalPages < 2) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (target instanceof HTMLElement && ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) {
+        return;
+      }
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        goToPage(safeCurrentPage + 1);
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        goToPage(safeCurrentPage - 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [goToPage, safeCurrentPage, totalPages]);
+
+  useEffect(() => {
+    if (!hasPaginatedRef.current || isPrinting) return;
+
+    pageTopRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, [isPrinting, safeCurrentPage]);
 
   return (
     <article className="py-8 md:py-12">
-      <div className="container mx-auto px-4" style={{ maxWidth: 'var(--max-width-reading)' }}>
+      <div className="story-container container mx-auto px-4" style={{ maxWidth: 'var(--max-width-reading)' }}>
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: 20 }}
@@ -75,67 +175,81 @@ export function StoryReader({ story }: StoryReaderProps) {
         <div className="alpona-divider" aria-hidden="true" />
 
         {/* Reading Controls */}
-        <ReadingControls />
+        <ReadingControls fontSize={fontSize} onFontSizeChange={changeFontSize} />
+
+        {!isPrinting && totalPages > 1 && (
+          <div className="story-pagination mt-4" aria-label="গল্পের পৃষ্ঠা নিয়ন্ত্রণ">
+            <p className="story-pagination__status">
+              পৃষ্ঠা {toBengaliNumeral(safeCurrentPage + 1)} / {toBengaliNumeral(totalPages)}
+            </p>
+            <div className="story-pagination__buttons">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => goToPage(safeCurrentPage - 1)}
+                disabled={safeCurrentPage === 0}
+                aria-label="আগের পৃষ্ঠা"
+              >
+                ← আগের পৃষ্ঠা
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => goToPage(safeCurrentPage + 1)}
+                disabled={safeCurrentPage === totalPages - 1}
+                aria-label="পরের পৃষ্ঠা"
+              >
+                পরের পৃষ্ঠা →
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Story Body */}
         <motion.div
+          ref={pageTopRef}
+          key={isPrinting ? 'print-view' : `page-${safeCurrentPage}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="story-body mt-8"
+          transition={{ delay: 0.2, duration: 0.35 }}
+          className="story-body story-page mt-8"
           style={{
             fontFamily: 'var(--ফন্ট-মূল)',
-            fontSize: '1.15rem',
+            fontSize: `${fontSize}%`,
             lineHeight: '2.0',
             color: 'var(--রং-কালি)',
           }}
         >
-          {/* Render content as pre-formatted + paragraphs */}
-          {story.content.split('\n\n').map((para, i) => {
-            const trimmed = para.trim();
-            if (!trimmed) return null;
-
-            // Heading detection
-            if (trimmed.startsWith('## ')) {
-              return (
-                <h2 key={i} className="text-xl md:text-2xl mt-10 mb-4" style={{ fontFamily: 'var(--ফন্ট-শিরোনাম)', color: 'var(--রং-জাফরান)' }}>
-                  {trimmed.replace(/^## /, '')}
-                </h2>
-              );
-            }
-
-            // Blockquote detection
-            if (trimmed.startsWith('> ')) {
-              return (
-                <blockquote key={i}>
-                  {trimmed.split('\n').map((line, j) => (
-                    <span key={j}>
-                      {line.replace(/^> ?/, '')}
-                      {j < trimmed.split('\n').length - 1 && <br />}
-                    </span>
-                  ))}
-                </blockquote>
-              );
-            }
-
-            // Horizontal rule
-            if (trimmed === '---') {
-              return <hr key={i} />;
-            }
-
-            // Regular paragraph
-            return (
-              <p key={i} className="mb-5">
-                {trimmed.split('\n').map((line, j) => (
-                  <span key={j}>
-                    {renderInlineMarkdown(line)}
-                    {j < trimmed.split('\n').length - 1 && <br />}
-                  </span>
-                ))}
-              </p>
-            );
-          })}
+          {visibleBlocks.map((block) => renderStoryBlock(block))}
         </motion.div>
+
+        {!isPrinting && totalPages > 1 && (
+          <div className="story-pagination mt-6" aria-label="গল্পের পৃষ্ঠা নিয়ন্ত্রণ নিচে">
+            <p className="story-pagination__status">
+              পৃষ্ঠা {toBengaliNumeral(safeCurrentPage + 1)} / {toBengaliNumeral(totalPages)}
+            </p>
+            <div className="story-pagination__buttons">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => goToPage(safeCurrentPage - 1)}
+                disabled={safeCurrentPage === 0}
+                aria-label="আগের পৃষ্ঠা"
+              >
+                ← আগের পৃষ্ঠা
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => goToPage(safeCurrentPage + 1)}
+                disabled={safeCurrentPage === totalPages - 1}
+                aria-label="পরের পৃষ্ঠা"
+              >
+                পরের পৃষ্ঠা →
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Footer divider */}
         <div className="alpona-divider mt-12" aria-hidden="true" />
@@ -152,6 +266,195 @@ export function StoryReader({ story }: StoryReaderProps) {
       </div>
     </article>
   );
+}
+
+function renderStoryBlock(block: StoryBlock): React.ReactNode {
+  if (block.type === 'heading') {
+    return (
+      <h2
+        key={block.key}
+        className="text-xl md:text-2xl mt-10 mb-4"
+        style={{ fontFamily: 'var(--ফন্ট-শিরোনাম)', color: 'var(--রং-জাফরান)' }}
+      >
+        {block.text}
+      </h2>
+    );
+  }
+
+  if (block.type === 'blockquote') {
+    return (
+      <blockquote key={block.key}>
+        {block.text.split('\n').map((line, index, lines) => (
+          <span key={`${block.key}-${index}`}>
+            {line.replace(/^> ?/, '')}
+            {index < lines.length - 1 && <br />}
+          </span>
+        ))}
+      </blockquote>
+    );
+  }
+
+  if (block.type === 'hr') {
+    return <hr key={block.key} />;
+  }
+
+  return (
+    <p
+      key={block.key}
+      className={`mb-5 ${block.isLeadParagraph ? 'story-paragraph--lead' : ''}`}
+      data-dialogue={block.isDialogue || undefined}
+    >
+      {block.text.split('\n').map((line, index, lines) => (
+        <span key={`${block.key}-${index}`}>
+          {renderInlineMarkdown(line)}
+          {index < lines.length - 1 && <br />}
+        </span>
+      ))}
+    </p>
+  );
+}
+
+function parseStoryBlocks(content: string): StoryBlock[] {
+  let leadParagraphAssigned = false;
+
+  return content
+    .split('\n\n')
+    .reduce<StoryBlock[]>((blocks, para, index) => {
+      const trimmed = para.trim();
+      if (!trimmed) return blocks;
+
+      if (trimmed.startsWith('## ')) {
+        blocks.push({ key: `heading-${index}`, type: 'heading', text: trimmed.replace(/^## /, '') });
+        return blocks;
+      }
+
+      if (trimmed.startsWith('> ')) {
+        blocks.push({ key: `blockquote-${index}`, type: 'blockquote', text: trimmed });
+        return blocks;
+      }
+
+      if (trimmed === '---') {
+        blocks.push({ key: `hr-${index}`, type: 'hr' });
+        return blocks;
+      }
+
+      const isLeadParagraph = !leadParagraphAssigned;
+      leadParagraphAssigned = true;
+
+      blocks.push({
+        key: `paragraph-${index}`,
+        type: 'paragraph',
+        text: trimmed,
+        isLeadParagraph,
+        isDialogue: trimmed.split('\n').every((line) => line.trim().startsWith('—')),
+      });
+
+      return blocks;
+    }, []);
+}
+
+function paginateStoryBlocks(blocks: StoryBlock[], pageCharacterBudget: number): StoryBlock[][] {
+  const splitThreshold = Math.max(320, Math.round(pageCharacterBudget * 0.72));
+  const expandedBlocks = blocks.flatMap((block) => splitStoryBlock(block, splitThreshold));
+  const pages: StoryBlock[][] = [];
+  let currentPage: StoryBlock[] = [];
+  let currentWeight = 0;
+
+  for (const block of expandedBlocks) {
+    const blockWeight = estimateBlockWeight(block);
+
+    if (currentPage.length > 0 && currentWeight + blockWeight > pageCharacterBudget) {
+      pages.push(currentPage);
+      currentPage = [];
+      currentWeight = 0;
+    }
+
+    currentPage.push(block);
+    currentWeight += blockWeight;
+  }
+
+  if (currentPage.length > 0) {
+    pages.push(currentPage);
+  }
+
+  return pages.length > 0 ? pages : [blocks];
+}
+
+function splitStoryBlock(block: StoryBlock, maxCharacters: number): StoryBlock[] {
+  if (block.type === 'hr' || !('text' in block) || block.text.length <= maxCharacters) {
+    return [block];
+  }
+
+  const chunks = splitTextPreservingWhitespace(block.text, maxCharacters);
+  if (chunks.length <= 1) {
+    return [block];
+  }
+
+  return chunks.map((chunk, index) => {
+    if (block.type === 'paragraph') {
+      return {
+        ...block,
+        key: `${block.key}-${index}`,
+        text: chunk,
+        isLeadParagraph: block.isLeadParagraph && index === 0,
+      };
+    }
+
+    return {
+      ...block,
+      key: `${block.key}-${index}`,
+      text: chunk,
+    };
+  });
+}
+
+function splitTextPreservingWhitespace(text: string, maxCharacters: number): string[] {
+  const tokens = text.match(/\S+\s*/g);
+  if (!tokens) return [text];
+
+  const chunks: string[] = [];
+  let currentChunk = '';
+
+  for (const token of tokens) {
+    if (currentChunk.length > 0 && currentChunk.length + token.length > maxCharacters) {
+      chunks.push(currentChunk.trim());
+      currentChunk = '';
+    }
+
+    currentChunk += token;
+  }
+
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
+  }
+
+  return chunks.length > 0 ? chunks : [text];
+}
+
+function estimateBlockWeight(block: StoryBlock): number {
+  if (block.type === 'hr') {
+    return 220;
+  }
+
+  if (block.type === 'heading') {
+    return block.text.length + 180;
+  }
+
+  if (block.type === 'blockquote') {
+    return Math.round(block.text.length * 1.15) + 220;
+  }
+
+  return block.text.length + 120;
+}
+
+function getPageCharacterBudget(viewportWidth: number, fontSize: number): number {
+  const baseBudget = viewportWidth < 640
+    ? 900
+    : viewportWidth < 1024
+      ? 1250
+      : 1650;
+
+  return Math.max(480, Math.round(baseBudget * (115 / fontSize)));
 }
 
 /** Simple inline markdown renderer (bold, italic, links) */

@@ -63,6 +63,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+  other: {
+    'color-scheme': 'light dark',
+  },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://golperpata.vercel.app"),
 };
 
@@ -84,15 +87,22 @@ export default function RootLayout({
       `}
     >
       <head>
+        <meta name="color-scheme" content="light dark" />
         {/* Prevent dark mode flash */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 var t = localStorage.getItem('golperpata-theme');
-                if (t) document.documentElement.setAttribute('data-theme', t);
-                else if (window.matchMedia('(prefers-color-scheme: dark)').matches)
-                  document.documentElement.setAttribute('data-theme', 'dark');
+                var resolved = t === 'light' || t === 'dark'
+                  ? t
+                  : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', resolved);
+                document.documentElement.style.colorScheme = resolved;
+                document.documentElement.setAttribute(
+                  'data-reading-ink',
+                  String(localStorage.getItem('golperpata-reading-ink') === 'true')
+                );
               })();
             `,
           }}

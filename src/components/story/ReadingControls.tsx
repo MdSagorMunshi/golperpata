@@ -1,19 +1,18 @@
 'use client';
 
-import { useState } from 'react';
 import { useReadingMode } from '@/components/providers/ReadingModeProvider';
 
-export function ReadingControls() {
-  const [fontSize, setFontSize] = useState(115); // percentage (100 = 1rem)
-  const { isReadingMode, toggleReadingMode } = useReadingMode();
+interface ReadingControlsProps {
+  fontSize: number;
+  onFontSizeChange: (delta: number) => void;
+}
 
-  const changeFontSize = (delta: number) => {
-    setFontSize((prev) => Math.min(180, Math.max(80, prev + delta)));
-  };
+export function ReadingControls({ fontSize, onFontSizeChange }: ReadingControlsProps) {
+  const { isReadingMode, isInkMode, toggleReadingMode, toggleInkMode } = useReadingMode();
 
   return (
     <div
-      className="flex items-center justify-center gap-4 py-3 mt-4 rounded"
+      className="reading-controls flex items-center justify-center gap-4 py-3 mt-4 rounded flex-wrap"
       style={{
         backgroundColor: 'var(--রং-পুরনো-কাগজ)',
         border: '1px solid var(--সীমা-হালকা)',
@@ -22,7 +21,7 @@ export function ReadingControls() {
       {/* Font size control */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => changeFontSize(-10)}
+          onClick={() => onFontSizeChange(-10)}
           className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold transition-colors"
           style={{ color: 'var(--রং-কালি-মাঝারি)', border: '1px solid var(--সীমা-হালকা)' }}
           aria-label="ছোট অক্ষর"
@@ -34,7 +33,7 @@ export function ReadingControls() {
           {fontSize}%
         </span>
         <button
-          onClick={() => changeFontSize(10)}
+          onClick={() => onFontSizeChange(10)}
           className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold transition-colors"
           style={{ color: 'var(--রং-কালি-মাঝারি)', border: '1px solid var(--সীমা-হালকা)' }}
           aria-label="বড় অক্ষর"
@@ -58,6 +57,22 @@ export function ReadingControls() {
         aria-label="পড়ার মোড"
       >
         {isReadingMode ? '✕ বন্ধ' : '📖 পড়ার মোড'}
+      </button>
+
+      <div className="w-px h-5" style={{ backgroundColor: 'var(--সীমা-হালকা)' }} />
+
+      {/* Ink mode */}
+      <button
+        onClick={toggleInkMode}
+        className="px-3 py-1 rounded text-xs font-medium transition-all"
+        style={{
+          color: isInkMode ? '#fff' : 'var(--রং-কালি-মাঝারি)',
+          backgroundColor: isInkMode ? 'var(--রং-মাটি)' : 'transparent',
+          border: `1px solid ${isInkMode ? 'var(--রং-মাটি)' : 'var(--সীমা-হালকা)'}`,
+        }}
+        aria-label="ইঙ্ক মোড"
+      >
+        {isInkMode ? '✕ ইঙ্ক বন্ধ' : '✒️ ইঙ্ক মোড'}
       </button>
 
       <div className="w-px h-5" style={{ backgroundColor: 'var(--সীমা-হালকা)' }} />
